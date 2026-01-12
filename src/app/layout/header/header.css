@@ -1,0 +1,13 @@
+
+img.svg-icons {
+    padding: 8px;
+    width: 35px;
+    background: white;
+    border-radius: 50%;
+}
+
+.justify-content-between{
+    justify-content: space-between !important;
+    background: linear-gradient(45deg, #1e293b, #96d2c8);
+    padding: 15px;
+}   
