@@ -1,0 +1,41 @@
+
+div#inner_container{
+    padding: 20px;
+    max-width: 60vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: fit-content;
+    background: #2f697e1f;
+    backdrop-filter: blur(3px);
+}
+
+textarea#comment {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+}
+
+input#title:focus, textarea:focus {
+    border: none;
+    background: inherit;
+    border: none;
+    border-bottom: 1px solid #1c274c;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+input#title , textarea{
+    width: 50vw;
+    background: inherit;
+    border: none;
+    border-bottom: 1px solid #1c274c;
+    border-radius: 0;
+}
+
+img.classic_svg{
+    width: 35px;
+}

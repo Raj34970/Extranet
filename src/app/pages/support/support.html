@@ -1,0 +1,225 @@
+<main>
+    <div class="container" id="inner_container">
+        <div class="box">
+            <div class="table-header">
+                <div class="left">
+                    <button class="classic_button">
+                        <img src="assets/add-svg.svg" alt="link" class="classic_svg">
+                        <p class="m-0" routerLink="/addticket">create ticket</p>
+                    </button>
+                </div>
+                <div class="right" id="right_head_filterbox">
+                    <strong>Filtre par :</strong><img src="assets/sort.svg" alt="sort_svg" class="svg_arrows"/>
+                    <div class="filter d-flex">
+                        <div class="filter-selector m-auto">
+                            <label for="itemsPerPageSelect" class="small">Type</label>
+                            <select class="form-select form-select-sm"
+                                        [(ngModel)]="filterByType"
+                                        (change)="onFilterTypeChanges()">
+                                <option selected value="0">---Tous---</option>
+                                <option value="1">Incident <small>(default)</small></option>
+                                <option value="2">Demande</option>
+                            </select>
+                        </div>
+                        <div class="filter-selector m-auto">
+                            <label for="itemsPerPageSelect" class="small">Status</label>
+                            <select class="form-select form-select-sm" 
+                                [(ngModel)]="filterByStatus"
+                                (change)="onFilterStatusChanges()" aria-label=".form-select-sm example">
+                                <option selected value="">---Tous---</option>
+                                <option value="null">In progress <small>(default)</small></option>
+                                <option value="1">Closed</option>
+                            </select>
+                        </div>
+                        <div class="ticket-selector">
+                            <label for="itemsPerPageSelect" class="small">Page</label>
+                            <select id="itemsPerPageSelect" [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()" class="form-select" aria-label="Tickets per page">
+                                <option [value]="1">1</option>
+                                <option [value]="2">2</option>
+                                <option [value]="5">5</option>
+                                <option [value]="7">7</option>
+                                <option [value]="10">10</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>                    
+            </div>
+            <div *ngIf="loading" class="loading">
+                <p class="small m-auto text-center">loading tickets</p>
+                <div class="spinner"></div>
+            </div>
+            <div *ngIf="!loading && tickets.length === 0">No tickets found.</div>
+            <table *ngIf="tickets.length > 0" class="table">
+                <thead id="thead">
+                    <tr>
+                        <th></th>
+                        <th>Demandeur</th>
+                        <th style="width: 370px;">Titre</th>
+                        <th>
+                            Date de création
+                            <img src="assets/sort.svg" alt="sort button" class="svg_arrows" (click)="sortBy('date')" />
+                        </th>
+                        <th>
+                            Date de modification
+                            <img src="assets/sort.svg" alt="sort button" class="svg_arrows" (click)="sortBy('date_mod')" />
+                        </th>
+                        <th>
+                            Type
+                            <img src="assets/sort.svg" alt="sort button" class="svg_arrows" (click)="sortBy('type')" />
+                        </th>
+                        <th>
+                            Statut
+                            <img src="assets/sort.svg" alt="sort button" class="svg_arrows" (click)="sortBy('status')" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (ticket of tickets; track ticket.id) {
+                    <tr>
+                        <td (click)="toggleArrow()">
+                            <img src="assets/down-arrow.svg" alt="arrow" class="svg_arrows" 
+                            [class.rotate-90]="expandedTicketId === ticket.id"
+                            (click)="toggleTicketDetails(ticket.id)" />
+                        </td>
+                        <td>{{ ticket.recipient ? ticket.recipient.realname + " " + ticket.recipient.firstname : '' }}</td>
+                        <td>{{ ticket.name }}</td>
+                        <td>{{ ticket.date | date: 'dd/MM/yyyy' }}</td>
+                        <td>{{ ticket.date_mod | date: 'dd/MM/yyyy' }}</td>
+                        <td>{{ ticket.type == 1 ? 'Incident' : 'Demande'}}</td>
+                        <td>
+                            <ng-container *ngIf="ticket.status == 6; else checkSolved">
+                                <span class="badge badge-secondary" *ngIf="ticket.solvedate">Solved & Closed - {{ ticket.closedate | date: 'dd/MM/yyyy' }}</span>
+                            </ng-container>
+                            <ng-template #checkSolved>
+                                <ng-container *ngIf="ticket.solvedate; else inProgress">
+                                <span class="badge badge-success">Resolved - {{ ticket.solvedate | date: 'dd/MM/yyyy' }}</span>
+                                </ng-container>
+                            </ng-template>
+                            <ng-template #inProgress>
+                                <div class="status_div">
+                                    <span class="badge badge-warning">In Progress</span>
+                                    <img src="assets/stop-svg.svg" alt="stop" class="stop_svg" (click)=closeTicket(ticket.id)/>
+                                </div>
+                            </ng-template>
+                        </td>
+                    </tr>
+                    <tr *ngIf="expandedTicketId === ticket.id">
+                        <td colspan="6" class="ticket-details">
+                            <strong>Contenu:</strong>
+                            <div *ngIf="loading_followup" class="loading">
+                                <p class="small m-auto text-center">loading followups</p>
+                                <div class="spinner"></div>
+                            </div>
+                            <div class="ticket_content" [innerHTML]="sanitize(ticket.plainContent)"></div>
+                            <div *ngIf="ticket.documents?.length">
+                                <h4>Documents:</h4>
+                                <ul>
+                                    <li *ngFor="let doc of ticket.documents" class="document_li">
+                                        <a [href]="doc.downloadUrl" target="_blank">
+                                            {{ doc.filename }}
+                                            <img
+                                            [src]="doc.downloadUrl"
+                                            [alt]="doc.filename"
+                                            style="max-width: 300px; max-height: 300px;"
+                                            />
+                                        </a>                                            
+                                        <div *ngIf="!doc.mime?.startsWith('image/')">
+                                            <a [href]="doc.downloadUrl" target="_blank" rel="noopener noreferrer">{{ doc.filename }}</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div *ngIf="followups[ticket.id]?.length">
+                                <div *ngFor="let followup of followups[ticket.id]" class="followup-thread">
+                                    <p class="meta">
+                                    {{ followup.date | date: 'dd/MM/yyyy HH:mm' }} - <strong>Author:</strong> {{ followup.author }}
+                                    </p>
+                                    <div class="message">
+                                    {{ followup.content }}
+                                    </div>
+                                   <div class="documents" *ngIf="followup.documents?.length">
+                                        <p class="mt-4"><small class="muted">Attachments:</small></p>
+                                        <ul>
+                                            <li *ngFor="let doc of followup.documents" class="document_li">
+                                                <a [href]="doc.downloadUrl" target="_blank">
+                                                    <img 
+                                                    [src]="'/api/documents/' + doc.id + '/image?email=' + doc.email"
+                                                    [alt]="doc.filename"
+                                                    style="max-width: 100px; max-height: 300px;"
+                                                    />
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <hr />
+                                </div>
+                            </div>
+                            <div class="new-ticket-form mt-5" *ngIf="!ticket.closedate">
+                                <ul *ngIf="filePreviews[ticket.id]?.length" class="list-unstyled">
+                                    <li *ngFor="let preview of filePreviews[ticket.id]; let i = index" class="d-flex align-items-center gap-3 mb-2 border rounded p-2">
+                                        <ng-container *ngIf="preview.file.type.startsWith('image/'); else nonImage">
+                                        <img [src]="preview.url" alt="Preview" width="60" height="60" style="object-fit: cover; border-radius: 4px;" />
+                                        </ng-container>
+                                        <ng-template #nonImage>
+                                        <div class="d-flex flex-column">
+                                            <strong>{{ preview.file.name }}</strong>
+                                            <small>{{ preview.file.type || 'Unknown Type' }}</small>
+                                        </div>
+                                        </ng-template>
+                                        <button class="btn btn-sm btn-danger ms-auto" (click)="removeFile(ticket.id, i)">Supprimer</button>
+                                    </li>
+                                </ul>
+                                <div class="d-flex justify-content-between">
+                                    <input 
+                                    type="file" 
+                                    multiple 
+                                    [id]="'fileInput-' + ticket.id"
+                                    (change)="onFollowupFileSelected($event, ticket.id)"
+                                    style="display: none"
+                                    />
+                                    <img 
+                                    src="assets/attachment-interface.svg" 
+                                    alt="Upload" 
+                                    style="width: 40px; height: 40px; cursor: pointer"
+                                    (click)="triggerFileInput(ticket.id)"
+                                    />
+                                    <textarea
+                                        [ngModel]="newFollowupContent[ticket.id] || ''"
+                                        (ngModelChange)="newFollowupContent[ticket.id] = $event"
+                                        class="classic_input"
+                                        placeholder="Ajoutez un commentaire">
+                                    </textarea>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button (click)="submitFollowup(ticket.id)" class="classic_button">Envoyer</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="pagination-buttons">
+                <div class="info" *ngIf="totalTickets">
+                    <span class="small bold">Total tickets: {{ totalTickets }}</span>
+                </div>
+                <button (click)="prevPage()" [disabled]="currentPage <= 1" class="btn-arrows">
+                    <img src="assets/arrow-left.svg" alt="arrow left" class="svg_arrows" />
+                </button>
+                <span><p class="m-a badge bg-secondary text-wrap" *ngIf="totalPages > 0">Page {{ currentPage }} / {{ totalPages }}</p></span>
+                <button (click)="nextPage()" [disabled]="currentPage >= totalPages" class="btn-arrows">
+                    <img src="assets/arrow-right.svg" alt="arrow right" class="svg_arrows" />
+                </button>
+                <div class="page-section text-center mx-3">                
+                    <select
+                    class="form-select"
+                    [(ngModel)]="currentPage"
+                    (ngModelChange)="onPageSelect($event)">
+                    <option *ngFor="let page of totalPagesArray" [value]="page">{{ page }}</option>
+                    </select>
+                    <p class="small m-0">Aller à la page</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>

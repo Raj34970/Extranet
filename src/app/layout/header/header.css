@@ -1,4 +1,5 @@
 
+
 img.svg-icons {
     padding: 8px;
     width: 35px;
@@ -8,6 +9,13 @@ img.svg-icons {
 
 .justify-content-between{
     justify-content: space-between !important;
-    background: linear-gradient(45deg, #1e293b, #96d2c8);
+    background: linear-gradient(45deg, #06e8ad2e, #03629f);
     padding: 15px;
+    backdrop-filter: blur(4px);
 }   
+
+button {
+    cursor: pointer;
+    background: none;
+    border: none;
+}
